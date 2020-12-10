@@ -24,6 +24,11 @@ def create_black_footage(time, framerate, aspect_ratio):
     subprocess.run(ffmpeg_command)  # capture_output=True
 
 
+def add_sound_to_black():
+    ffmpeg_command = f'ffmpeg -i "black.mp4" -f lavfi -i anullsrc=cl=stereo:r=48000 -shortest -y -c:v copy "black_with_sound.mp4"'
+    subprocess.run(ffmpeg_command)
+
+
 def concat(output):
     ffmpeg_command = f'ffmpeg -i concat:intermediate1.ts|intermediate2.ts -c copy -bsf:a aac_adtstoasc {path}\\{output} -y'.split()
     subprocess.run(ffmpeg_command)
@@ -46,11 +51,12 @@ def sync_to_reference(vid, ref):
     new_vide_name = vid_rename(vid_name)  # rename to synced
     time_difference = get_time_difference(vid_timecode, ref_timecode)
     create_black_footage(time_difference, int(vid_timecode.framerate), aspect_ratio)
-    mp4_to_mpeg2('black.mp4', 'intermediate1.ts')
+    add_sound_to_black()
+    mp4_to_mpeg2('black_with_sound.mp4', 'intermediate1.ts')
     mp4_to_mpeg2(vid_name, 'intermediate2.ts')
     print(f'{vid_name} synced')
     concat(new_vide_name)
-    for file in ['black.mp4', 'intermediate1.ts', 'intermediate2.ts']:
+    for file in ['black.mp4', 'intermediate1.ts', 'intermediate2.ts', 'black_with_sound.mp4']:
         remove_file(file)
 
 
